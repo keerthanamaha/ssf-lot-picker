@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lot Picker – SSF (No-Category UI)</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #121932;
+        --muted: #7f8aa3;
+        --text: #e7ecff;
+        --ring: #4e82ff;
+        --border: #263153;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+          Cantarell, Noto Sans, "Helvetica Neue", Arial;
+        background: linear-gradient(180deg, #0b1020, #090e1b);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 10px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        background: #1a2650;
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .btn[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn:hover {
+        filter: brightness(1.1);
+      }
+      .btn.outline {
+        background: transparent;
+      }
+      .btn.danger {
+        background: #3b1120;
+        border-color: #6a2137;
+      }
+      .btn.small {
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+      select,
+      textarea,
+      input[type="file"] {
+        background: #0e1530;
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        border-radius: 10px;
+        outline: none;
+        width: 220px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        resize: vertical;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .tab-btn {
+        background: #0f1733;
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        outline: 3px solid var(--ring);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+      }
+      .title {
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .spin-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+      .spin-item {
+        border: 1px solid var(--border);
+        background: #0f1733;
+        border-radius: 16px;
+        padding: 10px;
+        text-align: center;
+        transition: box-shadow 0.1s, transform 0.1s;
+      }
+      .spin-item.active {
+        box-shadow: 0 0 0 4px var(--ring);
+        transform: translateY(-1px);
+      }
+      .teams {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+      }
+      .team-card {
+        border: 1px solid var(--border);
+        background: #0f1733;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .team-card h3 {
+        margin: 0 0 8px;
+      }
+      .app {
+        display: none;
+      }
+      /* Splash overlay (5 seconds) */
+      .splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(
+          80% 80% at 50% 40%,
+          #0f1733 0%,
+          #0b1020 60%,
+          #090e1b 100%
+        );
+        animation: splashFade 5s forwards ease-in;
+      }
+      .splash-inner {
+        text-align: center;
+      }
+      .splash img {
+        width: min(60vw, 340px);
+        height: auto;
+        filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45));
+        animation: logoZoom 4.6s ease-in forwards;
+      }
+      .splash h2 {
+        margin: 16px 0 0;
+        font-size: clamp(18px, 4vw, 28px);
+        letter-spacing: 0.5px;
+        color: #eaf1ff;
+        opacity: 0;
+        animation: textFade 4s ease forwards 0.6s;
+      }
+      @keyframes logoZoom {
+        0% {
+          transform: scale(1);
+          opacity: 0.96;
+        }
+        80% {
+          transform: scale(1.08);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.12);
+          opacity: 0;
+        }
+      }
+      @keyframes textFade {
+        0% {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        60% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+      }
+      @keyframes splashFade {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+
+      /* Top bar */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        backdrop-filter: blur(10px);
+        background: linear-gradient(
+          180deg,
+          rgba(10, 15, 31, 0.8),
+          rgba(10, 15, 31, 0.6)
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand .dot {
+        width: 50px;
+        height: 50px;
+      }
+      .brand h1 {
+        font-size: 18px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+      }
+      .tab-btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #10183a;
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .tab-btn.active {
+        outline: 3px solid var(--ring);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #172556;
+        color: var(--text);
+        padding: 9px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .btn:hover {
+        filter: brightness(1.05);
+      }
+      .btn[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+      .btn.danger {
+        background: #2b1420;
+        border-color: #5d263d;
+      }
+      .btn.small {
+        padding: 7px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Splash Screen -->
+    <div class="splash" id="splash">
+      <div class="splash-inner">
+        <img src="SSF New Logo.png" alt="SSF Logo" />
+        <h2>SSF Internal Tournament 2025</h2>
+      </div>
+    </div>
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <img src="SSF New Logo.png" alt="SSF Logo" class="dot" />
+
+          <h1>Lot Picker · SSF</h1>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn" id="tabDraft">Draft</button>
+          <button class="tab-btn" id="tabSetup">Setup</button>
+        </div>
+        <div class="actions">
+          <button class="btn small" id="btnUndo">Undo</button>
+          <button class="btn small danger" id="btnReset">Reset</button>
+          <button class="btn small ghost" id="btnExport">Export</button>
+          <label
+            class="btn small ghost"
+            style="position: relative; overflow: hidden"
+          >
+            Import
+            <input
+              type="file"
+              id="fileImport"
+              accept="application/json"
+              style="position: absolute; inset: 0; opacity: 0; cursor: pointer"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div
+      id="pwModal"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10050;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.5);
+      "
+    >
+      <div
+        style="
+          background: #0f1733;
+          border: 1px solid #263153;
+          border-radius: 16px;
+          padding: 18px;
+          width: min(92vw, 420px);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        "
+      >
+        <div style="font-weight: 800; font-size: 18px; margin-bottom: 10px">
+          Enter Password
+        </div>
+        <div class="muted" style="font-size: 13px; margin-bottom: 14px">
+          Only authorized users can access the Setup tab.
+        </div>
+        <input
+          id="pwInput"
+          placeholder="Password"
+          type="password"
+          style="width: 100%"
+        />
+        <div
+          id="pwError"
+          style="
+            color: #ff8a8a;
+            font-size: 13px;
+            display: none;
+            margin-top: 8px;
+          "
+        >
+          Invalid password.
+        </div>
+        <div class="row" style="justify-content: flex-end; margin-top: 14px">
+          <button class="btn small ghost" id="btnPwCancel">Cancel</button>
+          <button class="btn small" id="btnPwSubmit">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- App -->
+    <div class="app" id="app">
+      <div class="container">
+        <div id="draftTab" class="grid cols-4" style="margin-top: 12px">
+          <div class="card">
+            <div class="title">1) Pick who draws</div>
+            <div class="row" style="margin-bottom: 8px">
+              <button class="btn" id="btnSpinPick">Spin</button>
+              <button class="btn outline" id="btnQuickPick">Quick Pick</button>
+            </div>
+            <div id="pickerGrid" class="spin-grid"></div>
+          </div>
+
+          <div class="card">
+            <div class="title">2) Assign to a team</div>
+            <div id="currentPickInfo" class="muted" style="margin-bottom: 8px">
+              No one selected yet.
+            </div>
+            <div
+              id="selectedPersonCard"
+              style="
+                display: none;
+                margin: 10px 0 12px;
+                padding: 14px;
+                border: 2px solid #4e82ff;
+                border-radius: 12px;
+                background: #10183a;
+                text-align: center;
+                font-weight: 700;
+              "
+            >
+              Selected Player: <span id="selectedPersonName"></span>
+            </div>
+            <div class="row" style="margin-bottom: 8px">
+              <button class="btn" id="btnSpinTeam">Spin</button>
+              <button class="btn outline" id="btnQuickTeam">
+                Quick Assign
+              </button>
+            </div>
+            <div id="teamGrid" class="spin-grid"></div>
+          </div>
+
+          <div class="card">
+            <div class="title">Teams overview</div>
+            <div id="teamsWrap" class="teams"></div>
+          </div>
+        </div>
+
+        <div id="setupTab" style="display: none; margin-top: 12px">
+          <div class="card">
+            <div class="title">
+              Player lists (one per line). Categories are hidden in UI but used
+              internally.
+            </div>
+            <div class="grid">
+              <div>
+                <div class="muted" style="margin-bottom: 6px">Category 1</div>
+                <textarea id="txtCat1"></textarea>
+              </div>
+              <div>
+                <div class="muted" style="margin-bottom: 6px">Category 2</div>
+                <textarea id="txtCat2"></textarea>
+              </div>
+              <div>
+                <div class="muted" style="margin-bottom: 6px">Category 3</div>
+                <textarea id="txtCat3"></textarea>
+              </div>
+              <div>
+                <div class="muted" style="margin-bottom: 6px">Category 4</div>
+                <textarea id="txtCat4"></textarea>
+              </div>
+              <div>
+                <div class="muted" style="margin-bottom: 6px">Category 5</div>
+                <textarea id="txtCat5"></textarea>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px">
+              <button class="btn" id="btnSaveSetup">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Splash control (5s total)
+      const splash = document.getElementById("splash");
+      const app = document.getElementById("app");
+      setTimeout(() => {
+        splash.style.display = "none";
+        app.style.display = "block";
+      }, 5000);
+
+      // ----- Constants -----
+      const TEAM_COUNT = 5;
+      const CATEGORY_LIST = [
+        "Men A",
+        "Men B",
+        "Women A",
+        "Women B",
+        "Power Boosters",
+      ]; // hidden in UI, used for ordering
+
+      // ----- Persistence -----
+      const STORAGE_KEY = "lotpicker-nocat-v1";
+
+      // ----- State -----
+      const state = loadState() || createInitialState();
+
+      function createInitialState() {
+        // Default sample names; replace as needed
+        const names = {
+          "Men A": ["Aathi", "Barani", "Gap Ganesh", "Mani", "Ravi"],
+          "Men B": ["Somesh", "Praveen", "Mohan", "Raj", "Karthi"],
+          "Women A": ["Phuong", "Ramya", "Anitha", "Jayashree", "Edith"],
+          "Women B": ["Keerthana", "Indhu", "Lavanya", "Priti", "Sweta"],
+          "Power Boosters": ["Kannan", "Ganesh", "Teju", "Anjana", "Nandhini"],
+        };
+        const teamSlots = [];
+        for (let t = 0; t < TEAM_COUNT; t++) {
+          const row = {};
+          for (const cat of CATEGORY_LIST) row[cat] = null;
+          teamSlots.push(row);
+        }
+        return {
+          names,
+          teamSlots,
+          phase: "pick-picker",
+          currentPerson: null, // { name, category }
+          history: [],
+        };
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      function loadState() {
+        try {
+          const s = localStorage.getItem(STORAGE_KEY);
+          return s ? JSON.parse(s) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // ----- Derived map: name -> category -----
+      let nameToCat = buildNameToCategoryMap(state.names);
+      function buildNameToCategoryMap(namesByCat) {
+        const map = new Map();
+        for (const cat of Object.keys(namesByCat)) {
+          for (const n of namesByCat[cat]) map.set(n, cat);
+        }
+        return map;
+      }
+
+      // ----- Helpers -----
+      function remainingCandidatesAll(namesByCat, teamSlots) {
+        const taken = new Set();
+        for (const team of teamSlots) {
+          for (const cat of Object.keys(team)) {
+            if (team[cat]) taken.add(team[cat]);
+          }
+        }
+        const out = [];
+        for (const cat of Object.keys(namesByCat)) {
+          for (const n of namesByCat[cat]) {
+            if (!taken.has(n) && n.trim()) out.push({ name: n, category: cat });
+          }
+        }
+        return out;
+      }
+
+      function openTeamsForHiddenCategory(cat, teamSlots) {
+        const open = [];
+        for (let t = 0; t < teamSlots.length; t++) {
+          if (!teamSlots[t][cat]) open.push(t);
+        }
+        return open;
+      }
+
+      function quickPick(arr) {
+        if (!arr || arr.length === 0) return null;
+        const idx = Math.floor(Math.random() * arr.length);
+        return arr[idx];
+      }
+
+      function spin(items, grid, onDone) {
+        // items is an array of scalar values (names or team indexes)
+        const els = Array.from(grid.querySelectorAll(".spin-item"));
+        if (els.length === 0 || items.length === 0) return;
+
+        let idx = 0;
+        let cycles = 0;
+        let speed = 50;
+        const maxCycles = items.length * 2;
+
+        const interval = setInterval(() => {
+          els.forEach((el) => el.classList.remove("active"));
+          els[idx].classList.add("active");
+          idx = (idx + 1) % els.length;
+          cycles++;
+          if (cycles >= maxCycles) {
+            clearInterval(interval);
+            const selected = items[Math.floor(Math.random() * items.length)];
+            onDone(selected);
+          }
+        }, speed);
+      }
+
+      function disableButtons(set) {
+        document.getElementById("btnSpinPick").disabled = set;
+        document.getElementById("btnQuickPick").disabled = set;
+      }
+      function disableTeamButtons(set) {
+        document.getElementById("btnSpinTeam").disabled = set;
+        document.getElementById("btnQuickTeam").disabled = set;
+      }
+
+      // ----- Render -----
+      function renderAll() {
+        // Tabs
+        document
+          .getElementById("tabDraft")
+          .classList.toggle("active", activeTab === "draft");
+        document
+          .getElementById("tabSetup")
+          .classList.toggle("active", activeTab === "setup");
+        document.getElementById("draftTab").style.display =
+          activeTab === "draft" ? "" : "none";
+        document.getElementById("setupTab").style.display =
+          activeTab === "setup" ? "" : "none";
+
+        if (activeTab === "draft") {
+          renderPickPickerPhase();
+          renderPickTeamPhase();
+          renderTeams();
+          renderRemainingFlat();
+        } else {
+          renderSetup();
+        }
+      }
+
+      function renderPickPickerPhase() {
+        const grid = document.getElementById("pickerGrid");
+        grid.innerHTML = "";
+        const candidates = remainingCandidatesAll(state.names, state.teamSlots); // [{name, category}]
+        if (candidates.length === 0) {
+          grid.innerHTML = '<div class="muted">All players are assigned.</div>';
+          disableButtons(true);
+          return;
+        }
+        disableButtons(false);
+        for (const c of candidates) {
+          const div = document.createElement("div");
+          div.className = "spin-item";
+          div.textContent = c.name; // category intentionally hidden
+          div.dataset.name = c.name;
+          grid.appendChild(div);
+        }
+
+        document.getElementById("btnSpinPick").onclick = () => {
+          spin(
+            candidates.map((c) => c.name),
+            grid,
+            (selectedName) => {
+              const cat = nameToCat.get(selectedName);
+              state.currentPerson = { name: selectedName, category: cat };
+              state.phase = "pick-team";
+              saveState();
+              renderAll();
+            }
+          );
+        };
+        document.getElementById("btnQuickPick").onclick = () => {
+          const selectedName = quickPick(candidates.map((c) => c.name));
+          if (!selectedName) return;
+          const cat = nameToCat.get(selectedName);
+          state.currentPerson = { name: selectedName, category: cat };
+          state.phase = "pick-team";
+          saveState();
+          renderAll();
+        };
+      }
+
+      function renderPickTeamPhase() {
+        const info = document.getElementById("currentPickInfo");
+        const grid = document.getElementById("teamGrid");
+        grid.innerHTML = "";
+        if (!state.currentPerson) {
+          info.textContent = "No one selected yet.";
+          const card = document.getElementById("selectedPersonCard");
+          if (card) card.style.display = "none";
+          disableTeamButtons(true);
+          return;
+        }
+
+        info.textContent = `Assign: ${state.currentPerson.name}`;
+        const selCard = document.getElementById("selectedPersonCard");
+        const selName = document.getElementById("selectedPersonName");
+        if (selCard && selName) {
+          selName.textContent = state.currentPerson.name;
+          selCard.style.display = "block";
+        }
+        const openTeams = openTeamsForHiddenCategory(
+          state.currentPerson.category,
+          state.teamSlots
+        );
+        if (openTeams.length === 0) {
+          // Category full — clear current and bounce back
+          state.currentPerson = null;
+          state.phase = "pick-picker";
+          saveState();
+          renderAll();
+          return;
+        }
+        disableTeamButtons(false);
+        for (const t of openTeams) {
+          const div = document.createElement("div");
+          div.className = "spin-item";
+          div.textContent = `Team ${t + 1}`;
+          div.dataset.team = String(t);
+          grid.appendChild(div);
+        }
+
+        const commitAssignment = (teamIndex) => {
+          const { name, category } = state.currentPerson;
+          state.teamSlots[teamIndex][category] = name;
+          state.history.push({ teamIndex, category, name });
+          try {
+            showFlashMessage(name, `Team ${teamIndex + 1}`);
+          } catch (e) {}
+          state.currentPerson = null;
+          state.phase = "pick-picker";
+          saveState();
+          renderAll();
+        };
+
+        document.getElementById("btnSpinTeam").onclick = () => {
+          spin(openTeams, grid, (teamIndex) => commitAssignment(teamIndex));
+        };
+        document.getElementById("btnQuickTeam").onclick = () => {
+          const teamIndex = quickPick(openTeams);
+          if (teamIndex == null) return;
+          commitAssignment(teamIndex);
+        };
+      }
+
+      function renderTeams() {
+        const wrap = document.getElementById("teamsWrap");
+        wrap.innerHTML = "";
+        for (let t = 0; t < state.teamSlots.length; t++) {
+          const card = document.createElement("div");
+          card.className = "team-card";
+          const h = document.createElement("h3");
+          h.textContent = `Team ${t + 1}`;
+          card.appendChild(h);
+
+          // Show 5 anonymous lines (one per category, internal order fixed)
+          for (const cat of CATEGORY_LIST) {
+            const div = document.createElement("div");
+            const val = state.teamSlots[t][cat];
+            div.textContent = val ? val : "—";
+            card.appendChild(div);
+          }
+          wrap.appendChild(card);
+        }
+      }
+
+      function renderRemainingFlat() {
+        const box = document.getElementById("remainingBox");
+        const remaining = remainingCandidatesAll(state.names, state.teamSlots);
+        if (remaining.length === 0) {
+          box.innerHTML = '<div class="muted">No remaining players.</div>';
+          return;
+        }
+        remaining.sort((a, b) => a.name.localeCompare(b.name));
+        box.innerHTML =
+          '<ul style="margin:0;padding-left:18px;">' +
+          remaining.map((r) => `<li>${r.name}</li>`).join("") +
+          "</ul>";
+      }
+
+      // ----- Setup Tab -----
+      function renderSetup() {
+        const areas = [
+          document.getElementById("txtCat1"),
+          document.getElementById("txtCat2"),
+          document.getElementById("txtCat3"),
+          document.getElementById("txtCat4"),
+          document.getElementById("txtCat5"),
+        ];
+        for (let i = 0; i < 5; i++) {
+          const cat = CATEGORY_LIST[i];
+          areas[i].value = (state.names[cat] || []).join("\n");
+        }
+      }
+
+      document.getElementById("btnSaveSetup").onclick = () => {
+        const areas = [
+          document.getElementById("txtCat1").value,
+          document.getElementById("txtCat2").value,
+          document.getElementById("txtCat3").value,
+          document.getElementById("txtCat4").value,
+          document.getElementById("txtCat5").value,
+        ];
+        const newNames = {};
+        for (let i = 0; i < 5; i++) {
+          const cat = CATEGORY_LIST[i];
+          newNames[cat] = areas[i]
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+        state.names = newNames;
+        nameToCat = buildNameToCategoryMap(state.names);
+        // Clear any current person if their category vanished
+        if (state.currentPerson && !nameToCat.has(state.currentPerson.name)) {
+          state.currentPerson = null;
+          state.phase = "pick-picker";
+        }
+        saveState();
+        renderAll();
+      };
+
+      // ----- Actions: Undo/Reset/Export/Import -----
+      document.getElementById("btnUndo").onclick = () => {
+        const last = state.history.pop();
+        if (!last) return;
+        const { teamIndex, category, name } = last;
+        if (state.teamSlots[teamIndex][category] === name) {
+          state.teamSlots[teamIndex][category] = null;
+        }
+        state.phase = "pick-picker";
+        state.currentPerson = null;
+        saveState();
+        renderAll();
+      };
+
+      document.getElementById("btnReset").onclick = () => {
+        if (!confirm("Reset all teams and history?")) return;
+        for (let t = 0; t < state.teamSlots.length; t++) {
+          for (const cat of CATEGORY_LIST) state.teamSlots[t][cat] = null;
+        }
+        state.history = [];
+        state.phase = "pick-picker";
+        state.currentPerson = null;
+        saveState();
+        renderAll();
+      };
+
+      document.getElementById("btnExport").onclick = () => {
+        const payload = {
+          names: state.names,
+          teamSlots: state.teamSlots,
+          history: state.history,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "lotpicker-nocat-export.json";
+        document.body.appendChild(a);
+        a.click();
+        requestAnimationFrame(() => a.remove());
+      };
+
+      document.getElementById("fileImport").addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (!data || !data.names || !data.teamSlots)
+              throw new Error("Invalid file");
+            state.names = data.names;
+            state.teamSlots = data.teamSlots;
+            state.history = data.history || [];
+            nameToCat = buildNameToCategoryMap(state.names);
+            saveState();
+            renderAll();
+          } catch (err) {
+            alert("Import failed: " + err.message);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+
+      // ----- Password gate for Setup tab (always ask) -----
+      const ALLOWED_PASSWORD = "ssf2025"; // Change as needed
+
+      function showPwModal() {
+        document.getElementById("pwError").style.display = "none";
+        document.getElementById("pwInput").value = "";
+        document.getElementById("pwModal").style.display = "grid";
+        document.getElementById("pwInput").focus();
+      }
+      function hidePwModal() {
+        document.getElementById("pwModal").style.display = "none";
+      }
+
+      document.getElementById("btnPwCancel").onclick = hidePwModal;
+      document.getElementById("btnPwSubmit").onclick = () => {
+        const val = document.getElementById("pwInput").value || "";
+        if (val === ALLOWED_PASSWORD) {
+          hidePwModal();
+          activeTab = "setup";
+          renderAll();
+        } else {
+          document.getElementById("pwError").style.display = "";
+        }
+      };
+
+      // ----- Tabs handling -----
+      let activeTab = "draft";
+      document.getElementById("tabDraft").onclick = () => {
+        activeTab = "draft";
+        renderAll();
+      };
+      document.getElementById("tabSetup").onclick = () => {
+        showPwModal();
+      };
+
+      // ----- Initial render -----
+      renderAll();
+    </script>
+
+    <!-- Assignment Splash (overlay style with countdown) -->
+    <div
+      id="assignmentSplash"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        place-items: center;
+        background: rgba(9, 14, 27, 0.5);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+      "
+    >
+      <div
+        style="
+          background: #0f1733;
+          border: 1px solid #263153;
+          border-radius: 20px;
+          padding: 22px 26px;
+          text-align: center;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+          min-width: clamp(260px, 40vw, 520px);
+        "
+      >
+        <div
+          style="
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(
+              60% 60% at 50% 40%,
+              #1a2650 0%,
+              #10183a 80%
+            );
+            box-shadow: 0 0 0 6px #6aa0ff22;
+          "
+        >
+          <img
+            src="SSF New Logo.png"
+            alt="SSF Logo"
+            style="width: 36px; height: 36px; display: block"
+          />
+        </div>
+        <div
+          id="assignmentSplashText"
+          style="
+            font-size: clamp(18px, 2.6vw, 28px);
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            color: #e7ecff;
+          "
+        >
+          Assigned!
+        </div>
+        <div
+          id="assignmentCountdown"
+          style="margin-top: 6px; color: #7f8aa3; font-size: 14px"
+        >
+          Closing in 3...
+        </div>
+      </div>
+    </div>
+    <script>
+      function showFlashMessage(personName, teamName) {
+        const overlay = document.getElementById("assignmentSplash");
+        const text = document.getElementById("assignmentSplashText");
+        const countdownEl = document.getElementById("assignmentCountdown");
+        if (!overlay || !text || !countdownEl) return;
+        text.innerHTML = `Player "<span style="color:#4e82ff">${personName}</span>" assigned to team "<strong style="color:#4e82ff">${teamName}</strong>"`;
+        overlay.style.display = "grid";
+        requestAnimationFrame(() => {
+          overlay.style.opacity = "1";
+        });
+        let counter = 3;
+        countdownEl.textContent = `Closing in ${counter}...`;
+        const interval = setInterval(() => {
+          counter--;
+          if (counter > 0) {
+            countdownEl.textContent = `Closing in ${counter}...`;
+          } else {
+            clearInterval(interval);
+            overlay.style.opacity = "0";
+            setTimeout(() => {
+              overlay.style.display = "none";
+            }, 500);
+          }
+        }, 1000);
+      }
+    </script>
+  </body>
+</html>
